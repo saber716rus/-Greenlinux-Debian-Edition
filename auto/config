@@ -28,6 +28,7 @@ lb config noauto \
         --updates true \
         --security true \
         --backports false \
+        --debootstrap-options '--include=ca-certificates' \
         --firmware-chroot true \
         --firmware-binary true \
         --debian-installer none \
