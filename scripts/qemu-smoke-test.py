@@ -92,6 +92,16 @@ class BootTest:
                 if idx != 0:
                     print("FATAL: no login prompt on serial console")
                     self.record("boot-to-login", False, "no login prompt")
+                    # Диагностика: хвост serial-лога в вывод job
+                    logf.flush()
+                    try:
+                        with open(self.serial_log, "rb") as f:
+                            tail = f.read()[-2000:].decode(errors="ignore")
+                        print("---- serial log tail ----")
+                        print(tail)
+                        print("---- end serial log tail ----")
+                    except Exception:
+                        pass
                     return False
                 self.record("boot-to-login", True, "serial-getty login prompt reached")
 
