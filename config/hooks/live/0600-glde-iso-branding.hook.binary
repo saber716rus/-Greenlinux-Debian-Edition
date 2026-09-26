@@ -1,15 +1,18 @@
 #!/bin/sh
 # GLDE binary hook: брендинг ISO-образа.
+# ВНИМАНИЕ: binary-хуки выполняются с CWD = binary/ (корень ISO-дерева).
 
 set -e
 
 echo "GLDE: ISO branding"
 
+mkdir -p .disk
+
 # .disk/info — метка диска
-echo "GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск) - dev amd64" > binary/.disk/info
+echo "GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск) - dev amd64" > .disk/info
 
 # README в корне ISO
-cat > binary/README.txt <<'TEXT'
+cat > README.txt <<'TEXT'
 GreenLinux Debian Edition (GLDE)
 Версия:      GLDE.09.2026 (draft) — версия разработчика, не альфа
 Кодовое имя: Зеленодольск

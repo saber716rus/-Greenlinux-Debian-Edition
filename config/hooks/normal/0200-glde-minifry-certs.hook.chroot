@@ -21,10 +21,11 @@ SUB_CERT="${CERT_DIR}/russian_trusted_sub_ca_pem.crt"
 # 1) Системное хранилище
 if [ -f "${ROOT_CERT}" ] && [ -f "${SUB_CERT}" ]; then
     update-ca-certificates --fresh >/dev/null 2>&1 || update-ca-certificates >/dev/null 2>&1 || true
-    if grep -q "Russian Trusted Root CA" /etc/ca-certificates.conf 2>/dev/null; then
-        echo "GLDE: system trust store OK (Russian Trusted Root CA present)"
+    CERTS_LISTED=$(grep -c russian /etc/ca-certificates.conf 2>/dev/null || echo 0)
+    if [ "${CERTS_LISTED}" = "2" ]; then
+        echo "GLDE: system trust store OK (russian-trusted certs listed)"
     else
-        echo "GLDE: WARNING - Russian Trusted Root CA not listed in /etc/ca-certificates.conf" >&2
+        echo "GLDE: WARNING - russian-trusted certs not fully listed in /etc/ca-certificates.conf (${CERTS_LISTED}/2)" >&2
     fi
 else
     echo "GLDE: WARNING - certificate files missing in ${CERT_DIR}" >&2
