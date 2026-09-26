@@ -1,6 +1,6 @@
 #!/bin/bash
 # GLDE: локальный запуск тестов через isotovideo (ядро os-autoinst/openQA)
-# внутри Docker-контейнера openqa-worker. Не требует web-стека openQA.
+# внутри Docker-контейнера openqa_worker. Не требует web-стека openQA.
 #
 # Использование:
 #   ./run-isotovideo.sh /path/to/glde-*.iso [режим]
@@ -24,11 +24,14 @@ echo "Mode:   ${MODE}"
 mkdir -p "${OUT}"
 rm -rf "${OUT:?}"/*
 
-# Каталог прогона: main.pm + lib + tests + vars.json (ISO — по абсолютному пути)
-cp -r "${HERE}/main.pm" "${HERE}/lib" "${HERE}/tests" "${OUT}/"
+# Каталог прогона: main.pm + lib + tests + needles + vars.json
+# (CASEDIR/NEEDLES_DIR — абсолютные пути ВНУТРИ контейнера)
+cp -r "${HERE}/main.pm" "${HERE}/lib" "${HERE}/tests" "${HERE}/needles" "${OUT}/"
 
 jq --arg iso "${ISO}" --arg test "${MODE}" \
-   '.ISO = $iso | .TEST = $test' "${HERE}/vars.json" > "${OUT}/vars.json"
+   --arg casedir "/mnt/run" --arg needlesdir "/mnt/run/needles" \
+   '.ISO = $iso | .TEST = $test | .CASEDIR = $casedir | .NEEDLES_DIR = $needlesdir' \
+   "${HERE}/vars.json" > "${OUT}/vars.json"
 cat "${OUT}/vars.json"
 
 docker run --rm --privileged \
