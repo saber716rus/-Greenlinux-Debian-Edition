@@ -1,0 +1,43 @@
+#!/bin/sh
+# GLDE chroot hook: финальная очистка.
+#  - удаление Firefox (Яндекс Браузер — единственный браузер GLDE)
+#  - очистка apt-кэшей и логов
+
+set -e
+
+echo "GLDE: final cleanup"
+
+# 1) Firefox больше не нужен — основной браузер Яндекс Браузер
+if dpkg-query -W -f='${Status}' firefox-esr 2>/dev/null | grep -q "install ok installed"; then
+    DEBIAN_FRONTEND=noninteractive apt-get -y purge firefox-esr 'firefox-l10n-*' || true
+    echo "GLDE: firefox-esr removed (Yandex Browser is the only browser)"
+fi
+
+# 2) apt-очистка
+apt-get clean || true
+rm -rf /var/lib/apt/lists/* 2>/dev/null || true
+rm -rf /var/cache/apt/*.bin 2>/dev/null || true
+
+# 3) Логи
+find /var/log -type f -exec truncate -s 0 {} \; 2>/dev/null || true
+
+# 4) Разное
+rm -rf /tmp/* /var/tmp/* 2>/dev/null || true
+rm -f /var/lib/dbus/machine-id 2>/dev/null || true
+
+# 5) Проверка ключевых компонентов GLDE
+echo "GLDE: self-check"
+for pkg in yandex-browser-stable calamares cinnamon mint-meta-cinnamon live-boot; do
+    if dpkg-query -W -f='${Status}' "${pkg}" 2>/dev/null | grep -q "install ok installed"; then
+        echo "GLDE:   [OK] ${pkg}"
+    else
+        echo "GLDE:   [MISSING] ${pkg}" >&2
+    fi
+done
+if ls /usr/local/share/ca-certificates/russian-trusted/*.crt >/dev/null 2>&1; then
+    echo "GLDE:   [OK] russian-trusted certs present"
+else
+    echo "GLDE:   [MISSING] russian-trusted certs" >&2
+fi
+
+echo "GLDE: cleanup complete"

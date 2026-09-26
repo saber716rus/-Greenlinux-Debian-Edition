@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+## GreenLinux Debian Edition (GLDE) — build wrapper.
+## Executed automatically by `lb build`.
+
+if [ ! -e config/common ]
+then
+	lb config
+fi
+
+lb build "${@}"

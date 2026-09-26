@@ -1,0 +1,14 @@
+# GLDE: hardware firmware (non-free-firmware area of Debian trixie)
+firmware-linux
+firmware-linux-nonfree
+firmware-misc-nonfree
+firmware-iwlwifi
+firmware-realtek
+firmware-atheros
+firmware-brcm80211
+firmware-amd-graphics
+firmware-sof-signed
+
+# CPU microcode
+intel-microcode
+amd64-microcode

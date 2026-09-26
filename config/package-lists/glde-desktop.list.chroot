@@ -1,0 +1,31 @@
+# GLDE: desktop stack (Cinnamon 6.4 from Debian trixie, LMDE-style)
+lightdm
+slick-greeter
+lightdm-settings
+xserver-xorg
+xserver-xorg-video-intel
+xserver-xorg-video-ati
+xserver-xorg-video-fbdev
+xserver-xorg-video-vesa
+xserver-xorg-video-qxl
+xserver-xorg-video-vmware
+xserver-xorg-video-dummy
+
+# Terminal (Mint-adjusted, from gigi upstream component)
+gnome-terminal
+
+# Russian localization + fonts (Ubuntu font is referenced by mint-artwork gschema)
+task-russian-desktop
+fonts-ubuntu
+fonts-noto-core
+fonts-noto-color-emoji
+fonts-dejavu
+
+# Plymouth boot splash (mint-logo theme ships via debian-system-adjustments)
+plymouth
+plymouth-label
+plymouth-x11
+
+# Certificates integration helpers (NSS database for Chromium-based browsers)
+libnss3-tools
+ca-certificates

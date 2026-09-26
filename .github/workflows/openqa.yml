@@ -1,0 +1,248 @@
+name: openqa
+
+# Тестирование GLDE через openQA (os-autoinst):
+#
+# 1) job `isotovideo` — ядро os-autoinst (тот же движок, что и в openQA)
+#    запускается в контейнере openqa-worker; надёжно работает на GitHub-раннерах
+#    (QEMU TCG, без KVM). Выполняет те же тесты, что и полный openQA.
+#
+# 2) job `openqa-full` — полный стек openQA в контейнерах (db + webui + worker)
+#    с публикацией задания через openqa-cli. Опция `run_full_stack`.
+#    Рекомендуется self-hosted раннер с KVM: замените runs-on на [self-hosted, openqa].
+#
+# Пользователь live-сессии ISO: glde / glde (см. bootappend-live).
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_name:
+        description: 'Имя артефакта с ISO'
+        required: false
+        default: 'glde-iso'
+      run_full_stack:
+        description: 'Запустить и полный openQA-стек'
+        type: boolean
+        required: false
+        default: false
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  isotovideo:
+    name: openQA engine (isotovideo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.artifact_name || 'glde-iso' }}
+          run-id: ${{ github.event.workflow_run && github.event.workflow_run.id || '' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run os-autoinst tests (isotovideo in openqa-worker container)
+        run: |
+          set -euxo pipefail
+          ls -lh
+          ISO=$(ls -1 glde-*.iso | head -1)
+          chmod +x openqa/run-isotovideo.sh
+          ./openqa/run-isotovideo.sh "$(pwd)/${ISO}" smoke
+
+      - name: Show test results
+        if: always()
+        run: |
+          echo "=== autoinst-log tail ==="
+          tail -50 openqa/isotovideo-out/autoinst-log.txt 2>/dev/null || true
+          echo ""
+          echo "=== GLDE-CHECK lines ==="
+          grep -a "GLDE-CHECK" openqa/isotovideo-out/autoinst-log.txt openqa/isotovideo-out/console.log 2>/dev/null || true
+
+      - name: Evaluate result
+        if: always()
+        run: |
+          set -x
+          LOGS="openqa/isotovideo-out/autoinst-log.txt openqa/isotovideo-out/console.log"
+          # Явные фейлы
+          if grep -qa "integration checks FAILED" ${LOGS} 2>/dev/null; then
+            grep -a "FAILED" ${LOGS}; exit 1
+          fi
+          if grep -qa "Test died" ${LOGS} 2>/dev/null; then
+            grep -a -A5 "Test died" ${LOGS} | head -30; exit 1
+          fi
+          TOTAL=$(cat ${LOGS} 2>/dev/null | grep -a "GLDE-CHECK" | wc -l)
+          PASS=$(cat ${LOGS} 2>/dev/null | grep -a "GLDE-CHECK" | grep -ac ": PASS")
+          echo "Passed: ${PASS}/${TOTAL}"
+          if [ "${TOTAL}" -lt 10 ]; then
+            echo "Test run did not complete (too few checks executed)"; exit 1
+          fi
+          if [ "${PASS}" -ne "${TOTAL}" ]; then
+            cat ${LOGS} 2>/dev/null | grep -a "GLDE-CHECK" | grep -v ": PASS" || true
+            exit 1
+          fi
+          echo "ALL CHECKS PASSED"
+
+      - name: Upload openQA results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openqa-isotovideo-results
+          retention-days: 30
+          path: |
+            openqa/isotovideo-out/
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### openQA (isotovideo) — GLDE"
+            echo ""
+            echo '```'
+            cat openqa/isotovideo-out/autoinst-log.txt openqa/isotovideo-out/console.log 2>/dev/null | grep -a "GLDE-CHECK" || echo "no results"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  openqa-full:
+    name: openQA full stack (webui + worker)
+    runs-on: ubuntu-latest   # для KVM: замените на [self-hosted, openqa]
+    timeout-minutes: 360
+    if: >
+      github.event_name == 'workflow_dispatch' && github.event.inputs.run_full_stack == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /usr/local/.dotnet \
+                       /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune -af || true
+          df -h /
+
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name || 'glde-iso' }}
+          run-id: ${{ github.event.workflow_run && github.event.workflow_run.id || '' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start openQA stack
+        working-directory: openqa
+        run: |
+          set -x
+          docker compose up -d
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:9527/api/v1/jobs >/dev/null 2>&1; then
+              echo "webui is up"; break
+            fi
+            sleep 10
+          done
+          curl -sf http://127.0.0.1:9527/api/v1/jobs >/dev/null || {
+            docker ps -a; docker compose logs --tail=100; echo "webui did not come up"; exit 1;
+          }
+
+      - name: Deploy GLDE test distribution and ISO asset
+        working-directory: openqa
+        run: |
+          set -x
+          WEBUI=$(docker ps --format '{{.Names}}' | grep -m1 webui)
+          echo "WEBUI=${WEBUI}"
+          docker exec "${WEBUI}" mkdir -p /var/lib/openqa/share/tests/glde /var/lib/openqa/share/factory/iso
+          docker cp main.pm    "${WEBUI}:/var/lib/openqa/share/tests/glde/main.pm"
+          docker cp lib        "${WEBUI}:/var/lib/openqa/share/tests/glde/lib"
+          docker cp tests      "${WEBUI}:/var/lib/openqa/share/tests/glde/tests"
+          docker cp templates  "${WEBUI}:/var/lib/openqa/share/tests/glde/templates"
+          ISO=$(ls -1 ../glde-*.iso | head -1)
+          ISO_BASE=$(basename "${ISO}")
+          docker cp "${ISO}" "${WEBUI}:/var/lib/openqa/share/factory/iso/${ISO_BASE}"
+          echo "ISO_BASE=${ISO_BASE}" > /tmp/iso_base
+
+      - name: Trigger openQA job
+        working-directory: openqa
+        run: |
+          set -x
+          WEBUI=$(docker ps --format '{{.Names}}' | grep -m1 webui)
+          ISO_BASE=$(cat /tmp/iso_base)
+
+          # API-ключи публикуются webui в общем томе share/conf для воркеров
+          docker exec "${WEBUI}" bash -c 'ls -la /var/lib/openqa/share/conf/ 2>/dev/null; cat /var/lib/openqa/share/conf/* 2>/dev/null' || true
+          API_KEY=$(docker exec "${WEBUI}" bash -c 'grep -rhiE "^api_?key=" /var/lib/openqa/share/conf/ 2>/dev/null | head -1 | sed -E "s/^[^=]+= *//"')
+          API_SECRET=$(docker exec "${WEBUI}" bash -c 'grep -rhiE "^api_?secret=" /var/lib/openqa/share/conf/ 2>/dev/null | head -1 | sed -E "s/^[^=]+= *//"')
+          echo "API_KEY=${API_KEY:0:8}..."
+
+          # Создаём задание openqa-cli внутри контейнера (локальный API)
+          JOB_ID=$(docker exec "${WEBUI}" bash -c "
+            export OPENQA_URL=http://localhost:9527
+            openqa-cli api --apikey='${API_KEY}' --apisecret='${API_SECRET}' post jobs \
+              DISTRI=glde VERSION=09.2026 FLAVOR=dev ARCH=x86_64 TEST=smoke BUILD=draft \
+              ISO='${ISO_BASE}' \
+              2>&1 | tail -5
+          " || true)
+          echo "openqa-cli output: ${JOB_ID}"
+          JOB_ID=$(echo "${JOB_ID}" | grep -oE '"id" *: *[0-9]+' | grep -oE '[0-9]+' | head -1)
+          if [ -z "${JOB_ID}" ]; then
+            # Фолбэк: curl с заголовками
+            JOB_ID=$(docker exec "${WEBUI}" bash -c "
+              curl -sS -X POST http://localhost:9527/api/v1/jobs \
+                -H 'X-API-Key: ${API_KEY}' -H 'X-API-Secret: ${API_SECRET}' \
+                -F DISTRI=glde -F VERSION=09.2026 -F FLAVOR=dev -F ARCH=x86_64 \
+                -F TEST=smoke -F BUILD=draft -F ISO='${ISO_BASE}'
+            " | grep -oE '"id" *: *[0-9]+' | grep -oE '[0-9]+' | head -1 || true)
+          fi
+          echo "JOB_ID=${JOB_ID}"
+          [ -n "${JOB_ID}" ] || { echo "Failed to create openQA job"; docker logs "${WEBUI}" | tail -30; exit 1; }
+          echo "${JOB_ID}" > /tmp/jobid
+
+      - name: Wait for openQA job result
+        run: |
+          JOB_ID=$(cat /tmp/jobid)
+          echo "Waiting for job ${JOB_ID} (без KVM — TCG, может занять до 2 часов)..."
+          for i in $(seq 1 720); do
+            JSON=$(curl -sS "http://127.0.0.1:9527/api/v1/jobs/${JOB_ID}" || echo '{}')
+            STATE=$(echo "${JSON}" | jq -r '.job.state // "unknown"')
+            RESULT=$(echo "${JSON}" | jq -r '.job.result // "none"')
+            echo "[${i}] state=${STATE} result=${RESULT}"
+            if [ "${STATE}" = "done" ]; then
+              if [ "${RESULT}" = "passed" ]; then
+                echo "JOB PASSED"; exit 0
+              else
+                echo "JOB ${RESULT}"; exit 1
+              fi
+            fi
+            sleep 15
+          done
+          echo "Timeout waiting for job"; exit 1
+
+      - name: Collect results
+        if: always()
+        run: |
+          set -x
+          mkdir -p openqa-results
+          WEBUI=$(docker ps --format '{{.Names}}' | grep -m1 webui || echo none)
+          JOB_ID=$(cat /tmp/jobid 2>/dev/null || echo 0)
+          if [ "${WEBUI}" != "none" ]; then
+            for d in results testresults; do
+              docker cp "${WEBUI}:/var/lib/openqa/share/${d}/${JOB_ID}" "openqa-results/${d}-${JOB_ID}" 2>/dev/null || true
+            done
+            docker logs "${WEBUI}" > openqa-results/webui.log 2>&1 || true
+          fi
+          docker ps -a > openqa-results/containers.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openqa-full-results
+          retention-days: 30
+          path: openqa-results/

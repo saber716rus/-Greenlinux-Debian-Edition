@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Install Green Linux DE
+Name[ru]=Установить Green Linux DE
+GenericName=System Installer
+GenericName[ru]=Установщик системы
+Exec=pkexec calamares
+Comment=Install GreenLinux Debian Edition to disk (Calamares)
+Comment[ru]=Установить GLDE на диск (Calamares)
+Icon=/usr/share/glde/letter-g.png
+Terminal=false
+StartupNotify=true
+Categories=GNOME;GTK;System;

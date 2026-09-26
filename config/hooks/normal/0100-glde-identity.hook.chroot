@@ -1,0 +1,28 @@
+#!/bin/sh
+# GLDE chroot hook: system identity.
+# os-release / lsb-release / linuxmint info приходят из includes.chroot,
+# здесь — /etc/issue, /etc/issue.net и финальная проверка.
+
+set -e
+
+echo "GLDE: applying system identity"
+
+cat > /etc/issue <<'EOF'
+GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск) \n \l
+
+EOF
+
+cat > /etc/issue.net <<'EOF'
+GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск)
+
+EOF
+
+# os-release: /etc/os-release — симлинк на /usr/lib/os-release (base-files);
+# наш файл из includes.chroot уже перезаписал целевой.
+if [ -L /etc/os-release ] || [ -f /etc/os-release ]; then
+    rm -f /etc/os-release
+fi
+ln -s /usr/lib/os-release /etc/os-release
+
+echo "GLDE: identity applied"
+echo "GLDE: PRETTY_NAME=$(grep PRETTY_NAME /usr/lib/os-release)"

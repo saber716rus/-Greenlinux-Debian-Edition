@@ -1,0 +1,64 @@
+#!/bin/sh
+# GLDE chroot hook: Яндекс Браузер — основной браузер системы.
+#  - update-alternatives (x-www-browser, gnome-www-browser)
+#  - системный mimeapps.list (в /etc/xdg) в дополнение к skel
+#  - удаление Firefox, если он притащился зависимостями
+
+set -e
+
+echo "GLDE: configuring Yandex Browser as the default web browser"
+
+YB_BIN=""
+for cand in /usr/bin/yandex-browser-stable /opt/yandex/browser/yandex-browser; do
+    if [ -x "$cand" ]; then
+        YB_BIN="$cand"
+        break
+    fi
+done
+
+if [ -z "${YB_BIN}" ]; then
+    echo "GLDE: FATAL - yandex-browser-stable is not installed!" >&2
+    exit 1
+fi
+echo "GLDE: found Yandex Browser binary at ${YB_BIN}"
+
+# Определяем имя .desktop-файла
+YB_DESKTOP=""
+for d in yandex-browser.desktop yandex-browser-stable.desktop; do
+    if [ -f "/usr/share/applications/${d}" ]; then
+        YB_DESKTOP="${d}"
+        break
+    fi
+done
+if [ -z "${YB_DESKTOP}" ]; then
+    echo "GLDE: WARNING - no Yandex Browser .desktop file found" >&2
+fi
+echo "GLDE: using desktop entry '${YB_DESKTOP}'"
+
+# 1) Альтернативы Debian
+update-alternatives --install /usr/bin/x-www-browser x-www-browser "${YB_BIN}" 200 || true
+update-alternatives --set x-www-browser "${YB_BIN}" || true
+update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser "${YB_BIN}" 200 || true
+update-alternatives --set gnome-www-browser "${YB_BIN}" || true
+
+# 2) Системный mimeapps.list (/etc/xdg) — умолчания для всех пользователей
+cat > /etc/xdg/mimeapps.list <<EOF
+[Default Applications]
+x-scheme-handler/http=${YB_DESKTOP}
+x-scheme-handler/https=${YB_DESKTOP}
+x-scheme-handler/ftp=${YB_DESKTOP}
+x-scheme-handler/chrome=${YB_DESKTOP}
+text/html=${YB_DESKTOP}
+application/xhtml+xml=${YB_DESKTOP}
+application/x-extension-htm=${YB_DESKTOP}
+application/x-extension-html=${YB_DESKTOP}
+application/x-extension-shtml=${YB_DESKTOP}
+application/x-extension-xhtml=${YB_DESKTOP}
+application/x-extension-xht=${YB_DESKTOP}
+EOF
+
+# 3) Убираем Firefox из альтернатив, если был установлен
+update-alternatives --remove x-www-browser /usr/bin/firefox-esr 2>/dev/null || true
+update-alternatives --remove gnome-www-browser /usr/bin/firefox-esr 2>/dev/null || true
+
+echo "GLDE: Yandex Browser is now the default web browser"

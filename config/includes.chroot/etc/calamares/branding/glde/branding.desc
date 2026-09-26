@@ -1,0 +1,39 @@
+---
+componentName:   glde
+welcomeStyleCalamares: true
+welcomeExpandingLogo: true
+windowExpanding: normal
+windowSize: 800px,580px
+windowPlacement: center
+
+strings:
+    productName:         GreenLinux Debian Edition
+    shortProductName:    GLDE
+    version:             GLDE.09.2026 (draft)
+    shortVersion:        09.2026
+    versionedName:       GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск)
+    shortVersionedName:  GLDE 09.2026
+    bootloaderEntryName: Green Linux DE
+    productUrl:          https://greenlinux.ru/
+    supportUrl:          https://forum.linuxmint.su/
+    knownIssuesUrl:      https://github.com/saber716rus/Greenlinux-Debian-Edition/issues
+    releaseNotesUrl:     https://github.com/saber716rus/Greenlinux-Debian-Edition/releases
+    donateUrl:           https://greenlinux.ru/
+
+sidebar: widget
+navigation: widget
+
+images:
+    productLogo:         "letter-g.png"
+    productIcon:         "letter-g.png"
+    productWelcome:      "welcome.png"
+
+slideshow:               "show.qml"
+
+style:
+   SidebarBackground:    "#1d5c2c"
+   SidebarText:          "#FFFFFF"
+   SidebarTextCurrent:   "#b8f2c6"
+   SidebarBackgroundCurrent: "#27713a"
+
+slideshowAPI: 2

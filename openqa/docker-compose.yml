@@ -1,0 +1,52 @@
+# openQA in containers — GLDE.
+#
+# Официальные контейнеры os-autoinst (https://github.com/os-autoinst/openQA,
+# docs/GettingStarted.asciidoc, раздел "Containers").
+#
+# Запуск:   docker compose up -d
+# Web-UI:   http://127.0.0.1:9527
+#
+# Для полного прогона нужен KVM (self-hosted раннер); без KVM
+# worker использует QEMU TCG — работает, но медленно.
+
+services:
+  openqa-db:
+    image: registry.opensuse.org/devel/openqa/unstable/containers/openqa-db
+    environment:
+      POSTGRES_USER: openqa
+      POSTGRES_PASSWORD: openqa
+      POSTGRES_DB: openqa
+    volumes:
+      - openqa-db-data:/var/lib/postgresql/data
+
+  openqa-webui:
+    image: registry.opensuse.org/devel/openqa/unstable/containers/openqa-webui
+    depends_on:
+      - openqa-db
+    links:
+      - openqa-db:openqa-db
+    ports:
+      - "127.0.0.1:9527:9527"
+    environment:
+      POSTGRES_ENV_POSTGRES_USER: openqa
+      POSTGRES_ENV_POSTGRES_PASSWORD: openqa
+      POSTGRES_ENV_POSTGRES_DB: openqa
+      MODE: webui
+    volumes:
+      - openqa-share:/var/lib/openqa/share
+
+  openqa-worker:
+    image: registry.opensuse.org/devel/openqa/unstable/containers/openqa-worker
+    depends_on:
+      - openqa-webui
+    links:
+      - openqa-webui:openqa-webui
+    environment:
+      OPENQA_URL: http://openqa-webui:9527
+    volumes:
+      - openqa-share:/var/lib/openqa/share
+    privileged: true
+
+volumes:
+  openqa-db-data:
+  openqa-share:

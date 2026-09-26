@@ -1,0 +1,5 @@
+# Linux Mint upstream repository (LMDE 7 "Gigi" suite).
+# Provides Mint tooling: mint-meta-cinnamon, mint-themes, mint-y-icons,
+# mint-artwork, debian-system-adjustments, mintsources, grub2-theme-mint etc.
+# Key: config/archives/linuxmint.key
+deb http://packages.linuxmint.com gigi main upstream import

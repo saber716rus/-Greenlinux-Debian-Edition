@@ -1,0 +1,28 @@
+#!/bin/sh
+# GLDE binary hook: брендинг ISO-образа.
+
+set -e
+
+echo "GLDE: ISO branding"
+
+# .disk/info — метка диска
+echo "GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск) - dev amd64" > binary/.disk/info
+
+# README в корне ISO
+cat > binary/README.txt <<'TEXT'
+GreenLinux Debian Edition (GLDE)
+Версия:      GLDE.09.2026 (draft) — версия разработчика, не альфа
+Кодовое имя: Зеленодольск
+База:        Debian 13 "trixie" (как LMDE 7 Gigi) + Linux Mint repo
+Рабочий стол: Cinnamon 6.4
+Браузер:     Яндекс Браузер (основной)
+Сертификаты: Минцифры (Russian Trusted Root CA / Sub CA)
+Установщик:  Calamares
+
+Это сборка разработчика (draft). Возможны нестабильность и изменение состава.
+
+Проект сборки: https://github.com/saber716rus/Greenlinux-Debian-Edition
+Green Linux:   https://greenlinux.ru/
+TEXT
+
+echo "GLDE: ISO branding done"

@@ -1,0 +1,19 @@
+# build artifacts
+*.iso
+SHA256SUMS
+build.log
+cache/
+chroot/
+binary/
+.local/
+.glde-*
+
+# local testing outputs
+openqa/isotovideo-out/
+smoke-test-out/
+openqa-results/
+
+# editors
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!DOCTYPE wallpapers SYSTEM "cinnamon-wp-list.dtd">
+<wallpapers>
+
+<wallpaper deleted="false">
+    <name>Озеро</name>
+    <filename>/usr/share/backgrounds/greenlinux/greenlinux.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Республика Алтай</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Кремль</name>
+    <filename>/usr/share/backgrounds/greenlinux/kremlin_greenlinux.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Москва</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Гора Актру</name>
+    <filename>/usr/share/backgrounds/greenlinux/sele_ring.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Республика Алтай</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Синские столбы</name>
+    <filename>/usr/share/backgrounds/greenlinux/sinskie.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Река Синяя - Якутия</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Сахалин</name>
+    <filename>/usr/share/backgrounds/greenlinux/dalniy.jpeg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Дальний Восток</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Река Ляпин</name>
+    <filename>/usr/share/backgrounds/greenlinux/lyapin.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>ХМАО</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Зелёный_linux (по умолчанию)</name>
+    <filename>/usr/share/backgrounds/greenlinux/default_background.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>GreenLinux</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Екатеринбург</name>
+    <filename>/usr/share/backgrounds/greenlinux/ekaterenburg.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Екатеринбург</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Кремль</name>
+    <filename>/usr/share/backgrounds/greenlinux/kazan.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Казань</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Байкал</name>
+    <filename>/usr/share/backgrounds/greenlinux/baykal.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Иркутская область</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Большой Тхач</name>
+    <filename>/usr/share/backgrounds/greenlinux/tkach.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Республика Адыгея</artist>
+</wallpaper>
+
+<wallpaper deleted="false">
+    <name>Курильское озеро</name>
+    <filename>/usr/share/backgrounds/greenlinux/kyrilsk.jpeg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Дальний Восток</artist>
+</wallpaper>
+<wallpaper deleted="false">
+    <name>Крымский мост</name>
+    <filename>/usr/share/backgrounds/greenlinux/krim.jpg</filename>
+    <options>zoom</options>
+    <shade_type>solid</shade_type>
+    <pcolor>#000000</pcolor>
+    <scolor>#000000</scolor>
+    <artist>Республика Крым</artist>
+</wallpaper>
+</wallpapers>

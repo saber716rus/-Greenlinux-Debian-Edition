@@ -1,0 +1,72 @@
+#!/bin/sh
+# GLDE chroot hook: интеграция сертификатов Минцифры (Russian Trusted Root CA
+# и Russian Trusted Sub CA) во все хранилища доверия системы:
+#   1) системное хранилище update-ca-certificates (curl, openssl, apt, ...)
+#   2) NSS shared DB /etc/pki/nssdb (Chromium-браузеры: Яндекс Браузер)
+#   3) NSS DB в /etc/skel (новые пользователи)
+#   4) политика Firefox ESR ImportEnterpriseRoots (на случай наличия firefox)
+#
+# Сертификаты предоставлены официальным источником Минцифры:
+#   https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt
+#   https://gu-st.ru/content/lending/russian_trusted_sub_ca_pem.crt
+
+set -e
+
+echo "GLDE: integrating Russian Trusted CA certificates (Минцифры)"
+
+CERT_DIR="/usr/local/share/ca-certificates/russian-trusted"
+ROOT_CERT="${CERT_DIR}/russian_trusted_root_ca_pem.crt"
+SUB_CERT="${CERT_DIR}/russian_trusted_sub_ca_pem.crt"
+
+# 1) Системное хранилище
+if [ -f "${ROOT_CERT}" ] && [ -f "${SUB_CERT}" ]; then
+    update-ca-certificates --fresh >/dev/null 2>&1 || update-ca-certificates >/dev/null 2>&1 || true
+    if grep -q "Russian Trusted Root CA" /etc/ca-certificates.conf 2>/dev/null; then
+        echo "GLDE: system trust store OK (Russian Trusted Root CA present)"
+    else
+        echo "GLDE: WARNING - Russian Trusted Root CA not listed in /etc/ca-certificates.conf" >&2
+    fi
+else
+    echo "GLDE: WARNING - certificate files missing in ${CERT_DIR}" >&2
+fi
+
+# 2) NSS shared DB /etc/pki/nssdb (Chromium/Яндекс Браузер)
+if command -v certutil >/dev/null 2>&1; then
+    mkdir -p /etc/pki/nssdb
+    certutil -N -d sql:/etc/pki/nssdb --empty-password 2>/dev/null || true
+    certutil -A -d sql:/etc/pki/nssdb -n "Russian Trusted Root CA" -t "CT,C,C" -i "${ROOT_CERT}" 2>/dev/null || \
+        echo "GLDE: WARNING - failed to add Root CA to NSS DB" >&2
+    certutil -A -d sql:/etc/pki/nssdb -n "Russian Trusted Sub CA" -t "CT,C,C" -i "${SUB_CERT}" 2>/dev/null || \
+        echo "GLDE: WARNING - failed to add Sub CA to NSS DB" >&2
+    echo "GLDE: NSS shared DB (/etc/pki/nssdb) OK"
+else
+    echo "GLDE: WARNING - certutil not found (libnss3-tools not installed?)" >&2
+fi
+
+# 3) NSS DB в /etc/skel для новых пользователей
+if command -v certutil >/dev/null 2>&1; then
+    install -d -m 700 -o root -g root /etc/skel/.pki/nssdb
+    certutil -N -d sql:/etc/skel/.pki/nssdb --empty-password 2>/dev/null || true
+    certutil -A -d sql:/etc/skel/.pki/nssdb -n "Russian Trusted Root CA" -t "CT,C,C" -i "${ROOT_CERT}" 2>/dev/null || true
+    certutil -A -d sql:/etc/skel/.pki/nssdb -n "Russian Trusted Sub CA" -t "CT,C,C" -i "${SUB_CERT}" 2>/dev/null || true
+    echo "GLDE: NSS DB in /etc/skel OK"
+fi
+
+# 4) Политика Firefox ESR (если установлен) — ImportEnterpriseRoots
+mkdir -p /etc/firefox-esr/policies
+cat > /etc/firefox-esr/policies/policies.json <<'EOF'
+{
+  "policies": {
+    "Certificates": {
+      "ImportEnterpriseRoots": true
+    }
+  }
+}
+EOF
+
+# Политика для yandex-browser (Chromium-based, /etc/opt/yandex/browser):
+# явная установка домашней страницы и поисковика не навязывается — только сертификаты
+# через NSS (см. выше). Каталог политик создаём для будущих enterprise-настроек.
+mkdir -p /etc/opt/yandex/browser/policies/managed
+
+echo "GLDE: Russian Trusted CA integration complete"

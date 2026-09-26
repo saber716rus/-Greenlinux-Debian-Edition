@@ -1,0 +1,3 @@
+# Yandex Browser repository — the default web browser of GLDE.
+# Key: config/archives/yandex-browser.key
+deb [arch=amd64] https://repo.yandex.ru/yandex-browser/deb stable main

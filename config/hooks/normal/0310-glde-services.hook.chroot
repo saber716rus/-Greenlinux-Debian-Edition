@@ -1,0 +1,16 @@
+#!/bin/sh
+# GLDE chroot hook: systemd-сервисы (правки visual-gl).
+
+set -e
+
+echo "GLDE: enabling systemd services"
+
+chmod 0755 /usr/local/bin/glde-swappiness.sh /usr/local/bin/glde-upgrade-gui
+
+# Адаптивный swappiness (правка visual-gl)
+systemctl enable glde-swappiness.service || true
+
+# systemd-timesyncd с российскими серверами (конфиг в includes)
+systemctl enable systemd-timesyncd.service || true
+
+echo "GLDE: services enabled"

@@ -1,0 +1,64 @@
+#!/bin/sh
+# GLDE chroot hook: визуальная интеграция (правки visual-gl).
+#  - перекомпиляция glib-схем (наш mint-artwork.gschema.override перезаписал пакетный)
+#  - кэш шрифтов PT (Astra Sans, Root UI, Sans, Mono, Serif)
+#  - Plymouth: тема mint-logo
+#  - GRUB: тема Linux Mint + параметры ядра из visual-gl
+
+set -e
+
+echo "GLDE: applying visual branding (visual-gl patches)"
+
+# 1) glib-схемы
+if command -v glib-compile-schemas >/dev/null 2>&1; then
+    glib-compile-schemas /usr/share/glib-2.0/schemas/ || true
+    echo "GLDE: glib schemas recompiled"
+fi
+
+# 2) Кэш шрифтов
+if command -v fc-cache >/dev/null 2>&1; then
+    fc-cache -f >/dev/null 2>&1 || true
+    echo "GLDE: font cache rebuilt (PT fonts available: $(find /usr/share/fonts/truetype/pt -name '*.ttf' | wc -l) files)"
+fi
+
+# 3) Plymouth — тема mint-logo (поставляется debian-system-adjustments)
+if command -v plymouth-set-default-theme >/dev/null 2>&1 && [ -d /usr/share/plymouth/themes/mint-logo ]; then
+    plymouth-set-default-theme mint-logo || true
+    echo "GLDE: plymouth theme set to mint-logo"
+fi
+
+# 4) GRUB — тема + параметры ядра (правка visual-gl: init_on_alloc=1 slab_nomerge)
+mkdir -p /etc/default/grub.d
+cat > /etc/default/grub.d/51_glde.cfg <<'EOF'
+# GLDE / Green Linux GRUB defaults (visual-gl)
+# GRUB_DISTRIBUTOR намеренно "Debian": signed shim/grub из Debian ищут \EFI\debian
+# (см. debian-system-adjustments 50_lmde.cfg).
+GRUB_DISTRIBUTOR="Debian"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash init_on_alloc=1 slab_nomerge"
+GRUB_CMDLINE_LINUX=""
+GRUB_TIMEOUT_STYLE=hidden
+GRUB_TIMEOUT=0
+EOF
+
+# Тема GRUB от пакета grub2-theme-mint
+GRUB_THEME_PATH=""
+for t in /usr/share/grub/themes/linuxmint/theme.txt /usr/share/grub/themes/LinuxMint/theme.txt; do
+    if [ -f "$t" ]; then
+        GRUB_THEME_PATH="$t"
+        break
+    fi
+done
+if [ -n "${GRUB_THEME_PATH}" ]; then
+    echo "GRUB_THEME=\"${GRUB_THEME_PATH}\"" >> /etc/default/grub.d/51_glde.cfg
+    echo "GLDE: GRUB theme enabled (${GRUB_THEME_PATH})"
+else
+    echo "GLDE: WARNING - grub2-theme-mint theme.txt not found" >&2
+fi
+
+# 5) Значок меню GLDE в hicolor
+if [ -f /usr/share/glde/letter-g.png ]; then
+    install -d /usr/share/icons/hicolor/512x512/apps
+    install -m 0644 /usr/share/glde/letter-g.png /usr/share/icons/hicolor/512x512/apps/glde.png
+fi
+
+echo "GLDE: visual branding applied"

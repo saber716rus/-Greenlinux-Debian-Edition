@@ -1,0 +1,21 @@
+#!/bin/sh
+# GLDE chroot hook: тонкая настройка live-сессии.
+
+set -e
+
+echo "GLDE: live session tweaks"
+
+# sudo без пароля в live-сессии не включаем: live-пользователь glde
+# создаётся live-config в группе sudo с паролем 'glde' (см. bootappend-live).
+
+# Права на файлы skel
+chmod 0755 /etc/skel/.config 2>/dev/null || true
+chmod 0644 /etc/skel/.config/mimeapps.list 2>/dev/null || true
+if [ -f /etc/skel/Desktop/glde-install.desktop ]; then
+    chmod 0755 /etc/skel/Desktop/glde-install.desktop
+fi
+
+# Быстрый запуск терминала welcome-меню Mint не трогаем —
+# mintwelcome сам предложит тур по системе (штатное поведение LMDE).
+
+echo "GLDE: live session tweaks done"

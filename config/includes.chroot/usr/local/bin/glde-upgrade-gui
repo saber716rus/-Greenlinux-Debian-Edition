@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# GLDE Upgrade GUI — проверка обновлений Green Linux (адаптация upgrade_gui.sh из visual-gl).
+# Сравнивает версию системы (etc/glde-version) с тегами репозитория green-update.
+
+set -u
+
+DISTRIB_FILE="/etc/glde-version"
+REMOTE_TAGS_URL="https://gitlab.linuxmint.su/greenlinux/green-update/-/tags"
+
+if ! command -v zenity >/dev/null 2>&1; then
+    echo "zenity не установлен" >&2
+    exit 1
+fi
+
+REMOTE_VERSION=$(curl -fsSL --max-time 20 "${REMOTE_TAGS_URL}" 2>/dev/null \
+    | grep -Eo 'href="/greenlinux/green-update/-/tags/[0-9]+\.[0-9]+\.[0-9]+"' \
+    | cut -d '/' -f 6 | tr -d '"' | sort -rt . | head -n 1)
+
+LOCAL_VERSION=$(grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' "${DISTRIB_FILE}" 2>/dev/null | head -n 1)
+
+if [ -z "${REMOTE_VERSION}" ]; then
+    zenity --error --text="Не удалось получить информацию о версиях. Проверьте подключение к сети."
+    exit 1
+fi
+
+if [ -n "${LOCAL_VERSION}" ] && [[ "${REMOTE_VERSION}" > "${LOCAL_VERSION}" ]]; then
+    zenity --question --text="ВНИМАНИЕ! Перед обновлением рекомендуется создать резервную копию. Вышла новая версия операционной системы ${REMOTE_VERSION}. Хотите установить?" 2>/dev/null
+    case $? in
+        0)
+            zenity --info --text="Загрузка новой версии..."
+            cd /tmp/ || exit 1
+            wget -q "https://gitlab.linuxmint.su/greenlinux/green-update/-/archive/${REMOTE_VERSION}/green-update-${REMOTE_VERSION}.zip"
+            unzip -qo "green-update-${REMOTE_VERSION}.zip"
+            chmod +x "/tmp/green-update-${REMOTE_VERSION}/upgrade.sh"
+            sudo cp -r "/tmp/green-update-${REMOTE_VERSION}/" "/var/greenlinux-upgrade/"
+            zenity --info --text="Устанавливаем обновления..."
+            sudo /var/greenlinux-upgrade/upgrade.sh
+            cd /tmp && sudo rm -rf green-update-* && cd ~ || true
+            sudo apt clean -y && sudo apt install -f && sudo apt autoclean -y && sudo apt autoremove -y && sudo dpkg --configure -a || true
+            zenity --info --text="Версия ${REMOTE_VERSION} установлена. Для применения обновлений Ваш компьютер будет перезагружен через 10 секунд."
+            sleep 10
+            sudo reboot
+            ;;
+        1)
+            zenity --info --text="Вы отказались от обновлений."
+            ;;
+        -1)
+            zenity --error --text="Произошла ошибка."
+            ;;
+    esac
+else
+    zenity --info --text="Обновления отсутствуют. Текущая версия: ${LOCAL_VERSION:-dev}"
+fi
+
+exit 0

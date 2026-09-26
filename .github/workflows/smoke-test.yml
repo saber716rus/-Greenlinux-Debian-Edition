@@ -1,0 +1,88 @@
+name: smoke-test
+
+# Дымовой тест: загрузка собранного ISO в QEMU (BIOS + UEFI, TCG) с проверкой
+# всех ключевых интеграций через serial-консоль.
+# Запускается автоматически после успешного workflow `build`
+# или вручную (нужно передать имя артефакта с ISO).
+
+on:
+  workflow_run:
+    workflows: [build]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      artifact_name:
+        description: 'Имя артефакта с ISO (по умолчанию glde-iso)'
+        required: false
+        default: 'glde-iso'
+
+concurrency:
+  group: smoke-test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  qemu-smoke-test:
+    name: QEMU boot test (BIOS + UEFI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install QEMU + OVMF + pexpect
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 ovmf python3-pip
+          python3 -m pip install --break-system-packages pexpect
+          qemu-system-x86_64 --version
+
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.artifact_name || 'glde-iso' }}
+          run-id: ${{ github.event.workflow_run && github.event.workflow_run.id || '' }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run smoke test
+        env:
+          GLDE_BOOT_TIMEOUT: '2700'
+          GLDE_CMD_TIMEOUT: '420'
+        run: |
+          set -euxo pipefail
+          ls -lh
+          ISO=$(ls -1 glde-*.iso | head -1)
+          python3 scripts/qemu-smoke-test.py "${ISO}" --mode both --ram 4096
+
+      - name: Collect results
+        if: always()
+        run: |
+          mkdir -p smoke-test-out
+          ls -la smoke-test-out/ || true
+          cat smoke-test-out/report-*.txt || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          retention-days: 30
+          path: smoke-test-out/
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### GLDE smoke test (QEMU)"
+            echo ""
+            echo '```'
+            cat smoke-test-out/report-*.txt 2>/dev/null || echo "no report"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

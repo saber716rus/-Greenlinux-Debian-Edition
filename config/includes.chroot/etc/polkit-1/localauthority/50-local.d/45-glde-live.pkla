@@ -1,0 +1,8 @@
+# Разрешает запуск Calamares без ввода пароля в live-сессии GLDE
+# (пользователь live-сессии состоит в группе sudo).
+[Allow the GLDE live user to run Calamares]
+Identity=unix-group:sudo
+Action=org.calamares.pkexec.run
+ResultAny=no
+ResultInactive=no
+ResultActive=yes

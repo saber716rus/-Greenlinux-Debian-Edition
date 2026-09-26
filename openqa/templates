@@ -1,0 +1,30 @@
+# GLDE openQA — шаблоны заданий (для web-интерфейса и автопланировщика).
+# Для ручного запуска через REST API (POST /api/v1/jobs) файл не требуется:
+# передавайте DISTRI=glde VERSION=09.2026 FLAVOR=dev ARCH=x86_64 TEST=smoke.
+{
+    Product => {
+        'glde-09.2026-dev-x86_64' => {
+            distri  => 'glde',
+            version => '09.2026',
+            flavor  => 'dev',
+            arch    => 'x86_64',
+        },
+    },
+    TestSuite => {
+        smoke => {
+            description => 'GLDE smoke: boot to serial login + integration checks',
+            settings => [{key => 'GLDE_BOOT_TIMEOUT', value => '2400'}],
+        },
+        install => {
+            description => 'GLDE install via Calamares (requires captured needles)',
+            settings => [{key => 'GLDE_INSTALL_TEST', value => '1'}],
+        },
+    },
+    JobTemplates => [
+        {
+            machine => '64bit',
+            product => 'glde-09.2026-dev-x86_64',
+            test_suite => 'smoke',
+        },
+    ],
+}

@@ -1,0 +1,34 @@
+#!/bin/sh
+# GLDE chroot hook: настройка установщика Calamares.
+#  - убираем брендинг/иконки calamares-settings-debian (оставляем его helper-модули)
+#  - наша конфигурация в /etc/calamares уже скопирована через includes.chroot
+
+set -e
+
+echo "GLDE: configuring Calamares installer"
+
+# Убираем Debian-специфичные автозапуск и пункт меню (наши — glde-install.desktop)
+rm -f /etc/xdg/autostart/calamares-desktop-icon.desktop
+rm -f /usr/share/applications/calamares-install-debian.desktop
+rm -f /usr/share/pixmaps/install-debian.png
+
+# Проверяем, что наши настройки на месте
+if [ -f /etc/calamares/settings.conf ] && grep -q "branding: glde" /etc/calamares/settings.conf; then
+    echo "GLDE: /etc/calamares/settings.conf OK (branding: glde)"
+else
+    echo "GLDE: FATAL - /etc/calamares/settings.conf is missing or not GLDE!" >&2
+    exit 1
+fi
+
+if [ -f /etc/calamares/branding/glde/branding.desc ]; then
+    echo "GLDE: /etc/calamares/branding/glde OK"
+else
+    echo "GLDE: FATAL - Calamares GLDE branding missing!" >&2
+    exit 1
+fi
+
+# Права
+chown -R root:root /etc/calamares
+
+# polkit-правило для live-сессии уже в includes (/etc/polkit-1/.../45-glde-live.pkla)
+echo "GLDE: Calamares configuration complete"

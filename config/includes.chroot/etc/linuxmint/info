@@ -1,0 +1,10 @@
+RELEASE=09.2026
+CODENAME=zelenodolsk
+EDITION="Cinnamon"
+DESCRIPTION="GreenLinux Debian Edition 09.2026 (Зеленодольск)"
+DESKTOP=Gnome
+TOOLKIT=GTK
+NEW_FEATURES_URL=https://github.com/saber716rus/Greenlinux-Debian-Edition/releases
+RELEASE_NOTES_URL=https://github.com/saber716rus/Greenlinux-Debian-Edition/releases
+USER_GUIDE_URL=https://greenlinux.ru/doc
+GRUB_TITLE=Green Linux DE 09.2026

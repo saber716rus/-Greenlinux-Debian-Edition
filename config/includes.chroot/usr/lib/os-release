@@ -1,0 +1,12 @@
+NAME="GreenLinux Debian Edition"
+VERSION="GLDE.09.2026 (draft)"
+ID=linuxmint
+ID_LIKE="debian"
+PRETTY_NAME="GreenLinux Debian Edition GLDE.09.2026 (Зеленодольск) draft"
+VERSION_ID="09.2026"
+HOME_URL="https://greenlinux.ru/"
+SUPPORT_URL="https://forum.linuxmint.su/"
+BUG_REPORT_URL="https://github.com/saber716rus/Greenlinux-Debian-Edition/issues"
+PRIVACY_POLICY_URL="https://greenlinux.ru/"
+VERSION_CODENAME=zelenodolsk
+DEBIAN_CODENAME=trixie

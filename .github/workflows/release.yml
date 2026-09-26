@@ -1,0 +1,109 @@
+name: release
+
+# Автоматический релиз: при пуше тега v* (например v0.9.2026-dev.1)
+# собирает ISO и публикует GitHub Release (pre-release, т.к. GLDE.09.2026 — draft).
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Тег релиза (например v0.9.2026-dev.1); пусто = от текущего SHA'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space (~40 GB)
+        run: |
+          set -x
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /usr/local/.dotnet \
+                       /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+                       /usr/local/share/edge_driver /usr/local/share/gecko_driver \
+                       /usr/local/share/chromium /usr/local/share/google-chrome-stable || true
+          sudo docker image prune -af || true
+          sudo rm -rf /var/lib/docker/overlay2/* 2>/dev/null || true
+          df -h /
+
+      - name: Build ISO in Debian trixie container
+        run: |
+          set -euxo pipefail
+          docker pull debian:trixie
+          docker run --privileged --rm \
+            -v "$PWD:/glde" -w /glde \
+            -e DEBIAN_FRONTEND=noninteractive \
+            debian:trixie \
+            bash scripts/build-in-container.sh
+
+      - name: Prepare release info
+        id: rel
+        run: |
+          set -x
+          ISO=$(ls -1 glde-*.iso | head -1)
+          ISO_BASE=$(basename "${ISO}")
+          if [ -n "${{ github.event.inputs.tag }}" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="v0.9.2026-dev.$(date -u +%Y%m%d%H%M)"
+          fi
+          {
+            echo "iso=${ISO}"
+            echo "iso_base=${ISO_BASE}"
+            echo "tag=${TAG}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.rel.outputs.tag }}
+          name: "GLDE ${{ steps.rel.outputs.tag }} — GreenLinux Debian Edition 09.2026 (Зеленодольск)"
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            # GreenLinux Debian Edition — GLDE.09.2026 (draft)
+
+            > ⚠️ **Версия разработчика** (не альфа). Возможны нестабильность и изменение состава.
+
+            | | |
+            |---|---|
+            | Кодовое имя | **Зеленодольск** |
+            | База | Debian 13 "trixie" (как LMDE 7 Gigi) + репозиторий Linux Mint |
+            | Рабочий стол | Cinnamon 6.4 |
+            | Браузер | Яндекс Браузер (основной и единственный) |
+            | Сертификаты | Минцифры — Russian Trusted Root CA / Sub CA |
+            | Установщик | Calamares (брендинг GLDE) |
+
+            ## Проверка образа
+
+            ```bash
+            sha256sum -c SHA256SUMS
+            ```
+
+            ## Запись на USB
+
+            ```bash
+            sudo dd if=${{ steps.rel.outputs.iso_base }} of=/dev/sdX bs=4M status=progress oflag=direct
+            ```
+
+            Учётная запись live-сессии: `glde` / `glde`.
+          files: |
+            ${{ steps.rel.outputs.iso }}
+            SHA256SUMS
+            build.log
+            chroot.packages.live
+          fail_on_unmatched_files: true

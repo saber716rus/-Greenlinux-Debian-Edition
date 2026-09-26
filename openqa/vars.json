@@ -1,0 +1,14 @@
+{
+  "BACKEND": "qemu",
+  "DISTRI": "glde",
+  "VERSION": "09.2026",
+  "FLAVOR": "dev",
+  "ARCH": "x86_64",
+  "TEST": "smoke",
+  "BUILD": "draft",
+  "QEMURAM": 4096,
+  "QEMUCPUS": 2,
+  "QEMUVGA": "virtio",
+  "QEMU_NO_KVM": "1",
+  "GLDE_BOOT_TIMEOUT": "2400"
+}

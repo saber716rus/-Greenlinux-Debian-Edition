@@ -1,0 +1,36 @@
+[Default Applications]
+x-scheme-handler/http=yandex-browser.desktop;yandex-browser-stable.desktop;
+x-scheme-handler/https=yandex-browser.desktop;yandex-browser-stable.desktop;
+x-scheme-handler/ftp=yandex-browser.desktop;yandex-browser-stable.desktop;
+x-scheme-handler/chrome=yandex-browser.desktop;
+text/html=yandex-browser.desktop;yandex-browser-stable.desktop;
+application/xhtml+xml=yandex-browser.desktop;yandex-browser-stable.desktop;
+application/x-extension-htm=yandex-browser.desktop;
+application/x-extension-html=yandex-browser.desktop;
+application/x-extension-shtml=yandex-browser.desktop;
+application/x-extension-xhtml=yandex-browser.desktop;
+application/x-extension-xht=yandex-browser.desktop;
+application/pdf=evince.desktop;
+image/jpeg=eog.desktop;
+image/png=eog.desktop;
+image/gif=eog.desktop;
+image/bmp=eog.desktop;
+image/tiff=eog.desktop;
+image/webp=eog.desktop;
+image/svg+xml=eog.desktop;
+text/plain=org.gnome.gedit.desktop;
+text/x-python=org.gnome.gedit.desktop;
+application/zip=xarchiver.desktop;org.gnome.FileRoller.desktop;
+application/x-7z-compressed=xarchiver.desktop;org.gnome.FileRoller.desktop;
+application/x-compressed-tar=org.gnome.FileRoller.desktop;
+video/mp4=io.github.celluloid_player.Celluloid.desktop;
+video/x-matroska=io.github.celluloid_player.Celluloid.desktop;
+video/x-msvideo=io.github.celluloid_player.Celluloid.desktop;
+audio/mpeg=io.github.celluloid_player.Celluloid.desktop;
+audio/flac=io.github.celluloid_player.Celluloid.desktop;
+audio/x-wav=io.github.celluloid_player.Celluloid.desktop;
+application/vnd.debian.binary-package=gdebi.desktop;
+
+[Added Associations]
+x-scheme-handler/http=yandex-browser.desktop;
+x-scheme-handler/https=yandex-browser.desktop;

@@ -1,0 +1,11 @@
+# GLDE: Linux Mint / LMDE core (packages.linuxmint.com, suite gigi)
+# mint-meta-cinnamon pulls: cinnamon, nemo, cinnamon-control-center, ...
+# mint-meta-core pulls: mint-artwork, mint-themes, mint-y-icons, mint-translations,
+#   mintinstall, mintupdate, mintsystem, mintsources, mint-mirrors, mintwelcome,
+#   mintreport, mintbackup, grub2-theme-mint, debian-system-adjustments, linuxmint-keyring
+mint-meta-core
+mint-meta-cinnamon
+mint-meta-codecs
+mint-live-session
+mintstick
+timeshift

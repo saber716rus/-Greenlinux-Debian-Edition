@@ -1,0 +1,95 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  ISO_PATTERN: 'glde-*.iso'
+
+jobs:
+  build-iso:
+    name: Build GLDE ISO (live-build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner info
+        run: |
+          echo "Runner: ${{ runner.name }} (${{ runner.os }})"
+          nproc
+          free -h | head -2
+          df -h / | tail -1
+
+      - name: Free disk space (~40 GB)
+        run: |
+          set -x
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /usr/local/.dotnet \
+                       /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+                       /usr/local/share/edge_driver /usr/local/share/gecko_driver \
+                       /usr/local/share/chromium /usr/local/share/google-chrome-stable || true
+          sudo docker image prune -af || true
+          sudo rm -rf /var/lib/docker/overlay2/* 2>/dev/null || true
+          df -h /
+
+      - name: Build ISO in Debian trixie container
+        run: |
+          set -euxo pipefail
+          docker pull debian:trixie
+          docker run --privileged --rm \
+            -v "$PWD:/glde" -w /glde \
+            -e DEBIAN_FRONTEND=noninteractive \
+            debian:trixie \
+            bash scripts/build-in-container.sh
+
+      - name: Show artifacts
+        run: |
+          ls -lh *.iso SHA256SUMS build.log || true
+          cat SHA256SUMS || true
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glde-iso
+          retention-days: 30
+          compression-level: 0
+          path: |
+            *.iso
+            SHA256SUMS
+            build.log
+            chroot.packages.live
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### GLDE build"
+            echo ""
+            if ls *.iso >/dev/null 2>&1; then
+              echo "✅ ISO: $(ls -lh *.iso | awk '{print $9, $5}')"
+              echo ""
+              echo '```'
+              cat SHA256SUMS
+              echo '```'
+            else
+              echo "❌ ISO не собран — смотри build.log в артефактах"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

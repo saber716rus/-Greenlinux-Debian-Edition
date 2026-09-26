@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e
+
+## GreenLinux Debian Edition (GLDE) — live-build configuration
+##
+## Identity:
+##   name:      GreenLinux Debian Edition
+##   version:   GLDE.09.2026 (draft)
+##   codename:  Зеленодольск (zelenodolsk)
+##
+## Base: Debian 13 "trixie" (same base as LMDE 7 "Gigi") + Linux Mint
+## repository (packages.linuxmint.com, suite "gigi") for Mint tooling,
+## themes and artwork, as used by the original Green Linux (visual-gl).
+##
+## This script is executed automatically by `lb config`.
+
+lb config noauto \
+        --architecture amd64 \
+        --distribution trixie \
+        --archive-areas 'main contrib non-free non-free-firmware' \
+        --mirror-bootstrap 'http://deb.debian.org/debian/' \
+        --mirror-chroot 'http://deb.debian.org/debian/' \
+        --mirror-binary 'http://deb.debian.org/debian/' \
+        --parent-mirror-bootstrap 'http://deb.debian.org/debian/' \
+        --parent-mirror-chroot 'http://deb.debian.org/debian/' \
+        --parent-mirror-binary 'http://deb.debian.org/debian/' \
+        --updates true \
+        --security true \
+        --backports false \
+        --firmware-chroot true \
+        --firmware-binary true \
+        --debian-installer none \
+        --bootappend-live 'boot=live components hostname=glde-live username=glde user-fullname=GLDE user-password=glde locales=ru_RU.UTF-8 keyboard-layouts=us,ru timezone=Europe/Moscow console=ttyS0,115200 quiet splash' \
+        --iso-application 'GreenLinux Debian Edition' \
+        --iso-publisher 'GreenLinux; https://greenlinux.ru/; https://github.com/saber716rus/Greenlinux-Debian-Edition' \
+        --iso-volume 'GLDE_09_2026' \
+        --image-name 'glde-09.2026-draft-amd64' \
+        --uefi-secure-boot enable \
+        "${@}"

@@ -1,0 +1,5 @@
+# GLDE: live-system infrastructure (Debian trixie)
+live-boot
+live-config
+live-config-systemd
+live-tools
