@@ -125,6 +125,13 @@ class BootTest:
                         pass
                     return False
 
+                # 2.5) Отключаем эхо терминала — иначе pexpect ловит эхо
+                # команды вместо её вывода (bash печатает и то, и другое)
+                child.sendline(b"stty -echo")
+                child.expect(re.compile(rb"[#$] "), timeout=60)
+                child.sendline(b"export PS1='GLDE> '")
+                child.expect(re.compile(rb"GLDE> "), timeout=60)
+
                 # 3) Проверки
                 checks = [
                     ("os-release", "grep 'GreenLinux Debian Edition' /usr/lib/os-release"),
@@ -132,7 +139,7 @@ class BootTest:
                     ("yandex-browser", "dpkg-query -W -f='${Status}\\n' yandex-browser-stable"),
                     ("yandex-default-alt", "update-alternatives --query x-www-browser | grep -c yandex || true"),
                     ("yandex-desktop", "ls /usr/share/applications/ | grep -c yandex-browser"),
-                    ("no-firefox", "dpkg-query -W firefox-esr 2>/dev/null | grep -c 'ok installed' || echo 0"),
+                    ("no-firefox", "dpkg-query -W firefox-esr 2>/dev/null | grep -c 'ok installed' || true"),
                     ("minifry-certs-files", "ls /usr/local/share/ca-certificates/russian-trusted/ | grep -c russian"),
                     ("minifry-certs-trust", "grep -c russian /etc/ca-certificates.conf || true"),
                     ("minifry-nss", "certutil -L -d sql:/etc/pki/nssdb 2>/dev/null | grep -c 'Russian Trusted' || true"),
