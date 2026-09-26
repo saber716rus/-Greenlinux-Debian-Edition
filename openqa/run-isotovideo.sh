@@ -14,6 +14,7 @@ MODE="${2:-smoke}"
 IMAGE="${GLDE_WORKER_IMAGE:-registry.opensuse.org/devel/openqa/containers16.0/openqa_worker}"
 
 ISO="$(readlink -f "${ISO}")"
+ISO_BASE="$(basename "${ISO}")"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 OUT="${HERE}/isotovideo-out"
 
@@ -25,20 +26,22 @@ mkdir -p "${OUT}"
 rm -rf "${OUT:?}"/*
 
 # Каталог прогона: main.pm + lib + tests + needles + vars.json
-# (CASEDIR/NEEDLES_DIR — абсолютные пути ВНУТРИ контейнера)
+# (CASEDIR/NEEDLES_DIR/ISO — абсолютные пути ВНУТРИ контейнера)
 cp -r "${HERE}/main.pm" "${HERE}/lib" "${HERE}/tests" "${HERE}/needles" "${OUT}/"
 
-jq --arg iso "${ISO}" --arg test "${MODE}" \
+jq --arg iso "/mnt/iso/${ISO_BASE}" --arg test "${MODE}" \
    --arg casedir "/mnt/run" --arg needlesdir "/mnt/run/needles" \
    '.ISO = $iso | .TEST = $test | .CASEDIR = $casedir | .NEEDLES_DIR = $needlesdir' \
    "${HERE}/vars.json" > "${OUT}/vars.json"
 cat "${OUT}/vars.json"
 
 docker run --rm --privileged \
-  -v "${OUT}:/mnt/run" -w /mnt/run \
+  -v "${OUT}:/mnt/run" \
+  -v "${ISO}:/mnt/iso/${ISO_BASE}" \
+  -w /mnt/run \
   --entrypoint bash \
   "${IMAGE}" \
-  -c "ls -la && isotovideo 2>&1 | tee -a console.log" || true
+  -c "ls -la /mnt/run /mnt/iso && isotovideo 2>&1 | tee -a console.log" || true
 
 echo ""
 echo "=== Результаты: ${OUT} ==="

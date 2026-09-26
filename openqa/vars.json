@@ -8,7 +8,7 @@
   "BUILD": "draft",
   "QEMURAM": 4096,
   "QEMUCPUS": 2,
-  "QEMUVGA": "std",
+  "QEMU_VIDEO_DEVICE": "std",
   "QEMU_NO_KVM": "1",
   "GLDE_BOOT_TIMEOUT": "2400"
 }

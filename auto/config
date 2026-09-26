@@ -32,7 +32,7 @@ lb config noauto \
         --firmware-chroot true \
         --firmware-binary true \
         --debian-installer none \
-        --bootappend-live 'boot=live components hostname=glde-live username=glde user-fullname=GLDE user-password=glde locales=ru_RU.UTF-8 keyboard-layouts=us,ru timezone=Europe/Moscow console=ttyS0,115200 quiet splash' \
+        --bootappend-live 'boot=live components hostname=glde-live username=glde user-fullname=GLDE locales=ru_RU.UTF-8 keyboard-layouts=us,ru timezone=Europe/Moscow console=ttyS0,115200 quiet splash' \
         --iso-application 'GreenLinux Debian Edition' \
         --iso-publisher 'GreenLinux; https://greenlinux.ru/; https://github.com/saber716rus/Greenlinux-Debian-Edition' \
         --iso-volume 'GLDE_09_2026' \
