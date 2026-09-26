@@ -3,11 +3,11 @@
 set -e
 
 ## GreenLinux Debian Edition (GLDE) — build wrapper.
-## Executed automatically by `lb build`.
+## Executed automatically by `lb build` (redirect via Maybe_auto_redirect).
 
 if [ ! -e config/common ]
 then
 	lb config
 fi
 
-lb build "${@}"
+lb build noauto "${@}"

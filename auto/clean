@@ -5,4 +5,4 @@ set -e
 ## GreenLinux Debian Edition (GLDE) — clean wrapper.
 ## Executed automatically by `lb clean`.
 
-lb clean "${@}"
+lb clean noauto "${@}"
