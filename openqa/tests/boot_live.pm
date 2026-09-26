@@ -1,8 +1,12 @@
 package boot_live;
 
-# GLDE: загрузка live-системы до приглашения serial-getty и вход пользователем.
-# Умолчания live-сессии (bootappend-live ISO):
-#   username=glde  user-password=glde  hostname=glde-live  console=ttyS0,115200
+# GLDE: загрузка live-системы и подготовка serial-терминала.
+#
+# Механика os-autoinst:
+#  - вывод ядра: console=ttyS0 (в ISO) -> ringbuf -> wait_serial работает сразу
+#  - интерактивный ввод: virtio-terminal (root-virtio-terminal);
+#    в госте на порту org.openqa.console.virtio_console юнит
+#    glde-virtio-shell@.service поднимает bash с промптом GLDE-SHELL>
 
 use strict;
 use warnings;
@@ -13,29 +17,39 @@ sub run {
     my ($self) = @_;
     my $boot_timeout = get_var('GLDE_BOOT_TIMEOUT', 1800);
 
+    # 1) Ждём завершения загрузки по ttyS0 (serial-getty от systemd-getty-generator,
+    #    т.к. в cmdline ядра прописан console=ttyS0)
     record_info('boot', "waiting up to ${boot_timeout}s for serial login prompt");
-
-    my $matched = wait_serial('login:', timeout => $boot_timeout);
-    unless ($matched) {
+    my $booted = wait_serial('login:', timeout => $boot_timeout);
+    unless ($booted) {
         die 'GLDE: login prompt did not appear on serial console (boot failure?)';
     }
+    record_info('boot', 'system booted, serial-getty present');
 
-    select_console('serial-console');
+    # 2) Переключаемся на virtio-terminal и ждём shell гостя
+    select_console('root-virtio-terminal');
 
-    type_string("glde\n");
-    unless (wait_serial('Password:', timeout => 180)) {
-        die 'GLDE: no Password prompt on serial console';
+    # «Подталкиваем» промпт (см. serial_terminal::login в os-autoinst-distri-opensuse)
+    type_string("\n");
+    my $shell = wait_serial('GLDE-SHELL>', timeout => 300, quiet => 1);
+    if (!$shell) {
+        # Фолбэк: возможно getty на порту (hvc) с приглашением login
+        type_string("\n");
+        my $login = wait_serial('login:', timeout => 60, quiet => 1);
+        if ($login) {
+            type_string("glde\n");
+            wait_serial('Password:', timeout => 120) || die 'GLDE: no Password prompt on virtio terminal';
+            type_string("glde\n");
+            wait_serial('glde@', timeout => 120) || die 'GLDE: login on virtio terminal failed';
+            type_string("export PS1='GLDE-SHELL> '\n");
+            wait_serial('GLDE-SHELL>', timeout => 60) || die 'GLDE: no prompt after login';
+        }
+        else {
+            die 'GLDE: neither GLDE-SHELL> nor login prompt on virtio terminal';
+        }
     }
-    type_string("glde\n");
-    unless (wait_serial('glde@', timeout => 180)) {
-        die 'GLDE: serial login as glde failed';
-    }
 
-    # Облегчаем вывод: без цвета и с коротким приглашением
-    type_string("export PS1='GLDE> '\n");
-    wait_serial('GLDE>', timeout => 60);
-
-    record_info('login', 'serial login OK (user glde)');
+    record_info('terminal', 'interactive shell on virtio terminal ready');
     return;
 }
 

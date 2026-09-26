@@ -11,7 +11,7 @@ set -euo pipefail
 
 ISO="${1:?usage: run-isotovideo.sh <iso> [mode]}"
 MODE="${2:-smoke}"
-IMAGE="${GLDE_WORKER_IMAGE:-registry.opensuse.org/devel/openqa/unstable/containers/openqa-worker}"
+IMAGE="${GLDE_WORKER_IMAGE:-registry.opensuse.org/devel/openqa/containers16.0/openqa_worker}"
 
 ISO="$(readlink -f "${ISO}")"
 HERE="$(cd "$(dirname "$0")" && pwd)"

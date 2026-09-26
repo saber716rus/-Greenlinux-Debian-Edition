@@ -36,6 +36,6 @@ lb config noauto \
         --iso-application 'GreenLinux Debian Edition' \
         --iso-publisher 'GreenLinux; https://greenlinux.ru/; https://github.com/saber716rus/Greenlinux-Debian-Edition' \
         --iso-volume 'GLDE_09_2026' \
-        --image-name 'glde-09.2026-draft-amd64' \
+        --image-name 'glde-09.2026-draft' \
         --uefi-secure-boot enable \
         "${@}"

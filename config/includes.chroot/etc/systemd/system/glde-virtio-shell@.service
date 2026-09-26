@@ -1,0 +1,18 @@
+[Unit]
+Description=GLDE shell на virtio-порту openQA (%i)
+# Порт появляется только под openQA/os-autoinst (QEMU virtio-console).
+# На реальном железе порта нет — юнит просто не запускается.
+ConditionPathExists=/dev/virtio-ports/%i
+After=systemd-user-sessions.service
+
+[Service]
+Type=simple
+Environment=PS1=GLDE-SHELL>
+StandardInput=null
+StandardOutput=null
+StandardError=null
+ExecStart=/bin/sh -c 'exec setsid /bin/bash --noediting -i </dev/virtio-ports/%i >/dev/virtio-ports/%i 2>&1'
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

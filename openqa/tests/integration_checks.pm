@@ -74,7 +74,7 @@ sub run {
     wait_serial('===end===', timeout => 90);
 
     # Чистое выключение
-    type_string("echo glde | sudo -S poweroff 2>/dev/null || true\n");
+    type_string("systemctl poweroff || poweroff || true\n");
 
     if (@failures) {
         die 'GLDE integration checks FAILED: ' . join(', ', @failures) . "\n";

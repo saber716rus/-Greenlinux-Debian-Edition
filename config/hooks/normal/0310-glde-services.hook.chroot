@@ -6,9 +6,13 @@ set -e
 echo "GLDE: enabling systemd services"
 
 chmod 0755 /usr/local/bin/glde-swappiness.sh /usr/local/bin/glde-upgrade-gui
+chmod 0755 /usr/local/sbin/glde-openqa-gettys
 
 # Адаптивный swappiness (правка visual-gl)
 systemctl enable glde-swappiness.service || true
+
+# Консоли для openQA/os-autoinst (безвредны на реальном железе)
+systemctl enable glde-openqa-gettys.service || true
 
 # systemd-timesyncd с российскими серверами (конфиг в includes)
 systemctl enable systemd-timesyncd.service || true

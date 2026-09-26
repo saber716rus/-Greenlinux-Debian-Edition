@@ -1,11 +1,15 @@
 use strict;
 use warnings;
-use autotest;
 use testapi;
+use autotest;
 
 # GLDE openQA — планировщик тестов.
-# Тесты безигольные (needle-free): все проверки идут через serial-консоль
-# (в bootappend-live ISO прописан console=ttyS0,115200).
+# Тесты безигольные (needle-free): проверки идут через serial-консоли
+# (в bootappend-live ISO прописан console=ttyS0,115200; интерактивный
+# терминал — virtio-console, см. lib/GLDE.pm).
+
+use GLDE;
+testapi::set_distribution(GLDE->new());
 
 autotest::loadtest('tests/bootloader.pm');
 autotest::loadtest('tests/boot_live.pm');

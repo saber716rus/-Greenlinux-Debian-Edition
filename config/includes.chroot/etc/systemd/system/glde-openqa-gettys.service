@@ -1,0 +1,12 @@
+[Unit]
+Description=GLDE: консоли для openQA (virtio/hvc/serial gettys)
+After=multi-user.target
+ConditionPathExists=/dev/virtio-ports
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/glde-openqa-gettys
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+#!/bin/sh
+# GLDE: обеспечивает текстовые консоли для openQA/os-autoinst.
+#
+# 1) /dev/virtio-ports/org.openqa.console.* — сырой bash-шелл
+#    (порты virtio-console не являются tty, поэтому getty там не работает)
+# 2) /dev/hvc0, /dev/hvc1 — штатный serial-getty (tty-устройства)
+#
+# На реальном железе этих устройств нет — скрипт завершается бездействием.
+
+set -u
+
+# 1) virtio-порты openQA
+for port in /dev/virtio-ports/org.openqa.console.*; do
+    [ -e "${port}" ] || continue
+    instance="${port#/dev/virtio-ports/}"
+    echo "GLDE: starting virtio shell on ${port}"
+    systemctl start "glde-virtio-shell@${instance}.service" 2>/dev/null || true
+done
+
+# 2) hvc-консоли (если virtio-порты смонтированы как hvcN)
+for dev in /dev/hvc0 /dev/hvc1; do
+    [ -c "${dev}" ] || continue
+    echo "GLDE: starting serial-getty on ${dev}"
+    systemctl start "serial-getty@$(basename "${dev}").service" 2>/dev/null || true
+done
+
+exit 0
