@@ -53,7 +53,7 @@ class BootTest:
             "-smp", "2",
             "-m", str(self.ram),
             "-display", "none",
-            "-vga", "virtio",
+            "-vga", "std",
             "-serial", "stdio",
             "-monitor", "none",
             "-net", "none",
@@ -105,12 +105,25 @@ class BootTest:
                     return False
                 self.record("boot-to-login", True, "serial-getty login prompt reached")
 
-                # 2) Логин
-                child.sendline(b"glde")
-                child.expect(re.compile(rb"Password:"), timeout=300)
-                child.sendline(b"glde")
-                child.expect(re.compile(rb"[#$] "), timeout=300)
-                self.record("serial-login", True, "user glde logged in")
+                # 2) Логин (приглашение может быть локализовано — ru_RU)
+                try:
+                    child.sendline(b"glde")
+                    child.expect(re.compile(rb"Password:|\xd0\x9f\xd0\xb0\xd1\x80\xd0\xbe\xd0\xbb\xd1\x8c:"), timeout=300)
+                    child.sendline(b"glde")
+                    child.expect(re.compile(rb"[#$] "), timeout=300)
+                    self.record("serial-login", True, "user glde logged in")
+                except (pexpect.TIMEOUT, pexpect.EOF) as e:
+                    self.record("serial-login", False, f"login failed: {e}")
+                    logf.flush()
+                    try:
+                        with open(self.serial_log, "rb") as f:
+                            tail = f.read()[-1500:].decode(errors="ignore")
+                        print("---- serial log tail ----")
+                        print(tail)
+                        print("---- end serial log tail ----")
+                    except Exception:
+                        pass
+                    return False
 
                 # 3) Проверки
                 checks = [
@@ -219,7 +232,12 @@ def main():
                 print("WARNING: OVMF firmware not found, skipping UEFI test")
                 continue
         bt = BootTest(args.iso, mode, args.ram, workdir)
-        ok = bt.run()
+        try:
+            ok = bt.run()
+        except Exception as e:  # noqa: BLE001
+            print(f"EXCEPTION during [{mode}] test: {e!r}")
+            bt.record("exception", False, repr(e)[:200])
+            ok = False
         print(bt.report())
         with open(os.path.join(workdir, f"report-{mode}.txt"), "w") as f:
             f.write(bt.report() + "\n")

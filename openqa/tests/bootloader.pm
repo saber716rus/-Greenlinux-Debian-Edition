@@ -7,13 +7,13 @@ package bootloader;
 use strict;
 use warnings;
 use base 'basetest';
-use testapi qw(record_info sleep);
+use testapi qw(record_info);
 
 sub run {
     my ($self) = @_;
-    record_info('bootloader', 'GRUB timeout boot in progress (default entry: live)');
-    # GRUB_TIMEOUT ISO ~5s; даём запас и не мешаем авто-загрузке
-    sleep 10;
+    record_info('bootloader', 'GRUB timeout boot in progress (default entry: live, timeout=10)');
+    # GRUB_TIMEOUT ISO = 10 c; даём запас и не мешаем авто-загрузке
+    sleep 12;
     return;
 }
 
